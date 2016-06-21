@@ -3,6 +3,7 @@ package enmasse.rc.openshift;
 import com.openshift.restclient.IClient;
 import com.openshift.restclient.ResourceKind;
 import com.openshift.restclient.model.IReplicationController;
+import com.openshift.restclient.model.IResource;
 import enmasse.rc.model.LabelKeys;
 import enmasse.rc.model.Roles;
 
@@ -47,4 +48,9 @@ public class OpenshiftClient {
     public IReplicationController getBroker(String name) {
         return client.get(ResourceKind.REPLICATION_CONTROLLER, name, namespace);
     }
+
+    public IResource getSecret(String name) {
+        return client.get(ResourceKind.SECRET, name, namespace);
+    }
+
 }

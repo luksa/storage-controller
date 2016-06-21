@@ -43,6 +43,16 @@ public final class GeneratorAgentOptions {
         return brokerProperties;
     }
 
+    GeneratorAgentOptions resetRouterSecret() {
+        return new GeneratorAgentOptions(this.configHost, this.configPort, this.openshiftUrl,
+                                         new BrokerProperties(this.brokerProperties.brokerImage(),
+                                                              this.brokerProperties.brokerPort(),
+                                                              this.brokerProperties.brokerMounts(),
+                                                              this.brokerProperties.routerImage(),
+                                                              this.brokerProperties.routerPort(),
+                                                              null, null));
+    }
+
     public static GeneratorAgentOptions fromEnv(Map<String, String> env) {
         String openshiftHost = getEnvOrThrow(env, "KUBERNETES_SERVICE_HOST");
         String openshiftPort = getEnvOrThrow(env, "KUBERNETES_SERVICE_PORT");
@@ -60,7 +70,9 @@ public final class GeneratorAgentOptions {
         ifEnvExists(env, "BROKER_IMAGE", uri -> builder.brokerImage(new DockerImageURI(uri)));
         ifEnvExists(env, "BROKER_PORT", port -> builder.brokerPort(Integer.parseInt(port)));
         ifEnvExists(env, "ROUTER_IMAGE", uri -> builder.routerImage(new DockerImageURI(uri)));
-        ifEnvExists(env, "ROUTER_PORT", port -> builder.brokerPort(Integer.parseInt(port)));
+        ifEnvExists(env, "ROUTER_PORT", port -> builder.routerPort(Integer.parseInt(port)));
+        ifEnvExists(env, "ROUTER_CERTS_SECRET_NAME", name -> builder.routerSecretName(name));
+        ifEnvExists(env, "ROUTER_CERTS_PATH", path -> builder.routerSecretPath(path));
         return builder.build();
     }
 

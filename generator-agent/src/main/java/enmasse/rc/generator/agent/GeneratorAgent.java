@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openshift.restclient.ClientBuilder;
 import com.openshift.restclient.IClient;
+import com.openshift.restclient.OpenShiftException;
 import com.openshift.restclient.authorization.TokenAuthorizationStrategy;
 import io.vertx.core.Vertx;
 import io.vertx.proton.ProtonClient;
@@ -45,7 +46,15 @@ public class GeneratorAgent implements Runnable, AutoCloseable {
                 .resourceFactory(new TokenAuthorizationStrategy(options.openshiftToken())) // TODO: Use new method when new version of openshift-restclient-java is used.
                 .build();
 
-        configManager = new ConfigManager(new OpenshiftClient(osClient, options.openshiftNamespace()), new ConfigGenerator(osClient, options.brokerProperties()));
+        OpenshiftClient openshift = new OpenshiftClient(osClient, options.openshiftNamespace());
+
+        try {
+            openshift.getSecret(options.brokerProperties().routerSecretName());
+        } catch (OpenShiftException e) {
+            log.log(Level.INFO, "Router secret " + options.brokerProperties().routerSecretName() + " could not be retrieved; ignoring. [" + e.getStatus().getCode() + "]");
+            options = options.resetRouterSecret();
+        }
+        configManager = new ConfigManager(openshift, new ConfigGenerator(osClient, options.brokerProperties()));
         this.options = options;
     }
 
