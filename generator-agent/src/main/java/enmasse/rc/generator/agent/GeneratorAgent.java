@@ -46,15 +46,7 @@ public class GeneratorAgent implements Runnable, AutoCloseable {
                 .resourceFactory(new TokenAuthorizationStrategy(options.openshiftToken())) // TODO: Use new method when new version of openshift-restclient-java is used.
                 .build();
 
-        OpenshiftClient openshift = new OpenshiftClient(osClient, options.openshiftNamespace());
-
-        try {
-            openshift.getSecret(options.brokerProperties().routerSecretName());
-        } catch (OpenShiftException e) {
-            log.log(Level.INFO, "Router secret " + options.brokerProperties().routerSecretName() + " could not be retrieved; ignoring. [" + e.getStatus().getCode() + "]");
-            options = options.resetRouterSecret();
-        }
-        configManager = new ConfigManager(openshift, new ConfigGenerator(osClient, options.brokerProperties()));
+        configManager = new ConfigManager(new OpenshiftClient(osClient, options.openshiftNamespace()), new ConfigGenerator(osClient, options.brokerProperties()));
         this.options = options;
     }
 
