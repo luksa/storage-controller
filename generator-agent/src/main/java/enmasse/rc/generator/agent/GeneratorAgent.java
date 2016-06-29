@@ -42,7 +42,7 @@ public class GeneratorAgent implements Runnable, AutoCloseable {
         client = ProtonClient.create(vertx);
 
         IClient osClient = new ClientBuilder(options.openshiftUrl())
-                .resourceFactory(new TokenAuthorizationStrategy(options.openshiftToken())) // TODO: Use new method when new version of openshift-restclient-java is used.
+                .authorizationStrategy(new TokenAuthorizationStrategy(options.openshiftToken()))
                 .build();
 
         configManager = new ConfigManager(new OpenshiftClient(osClient, options.openshiftNamespace()), new ConfigGenerator(osClient, options.brokerProperties()));

@@ -1,7 +1,7 @@
 package enmasse.rc.generator;
 
 import com.openshift.restclient.ResourceKind;
-import com.openshift.restclient.model.IReplicationController;
+import com.openshift.restclient.model.IDeploymentConfig;
 import com.openshift.restclient.model.IResource;
 import enmasse.rc.model.BrokerProperties;
 import enmasse.rc.model.Config;
@@ -37,19 +37,19 @@ public class FileGenerator {
     private void generateConfig(Config config, File outputDir) throws IOException {
         List<IResource> resources = generator.generate(config);
         for (IResource resource : resources) {
-            if (ResourceKind.REPLICATION_CONTROLLER.equals(resource.getKind())) {
-                generateBroker((IReplicationController)resource, outputDir);
+            if (ResourceKind.DEPLOYMENT_CONFIG.equals(resource.getKind())) {
+                generateBroker((IDeploymentConfig)resource, outputDir);
             }
         }
     }
 
-    private void generateBroker(IReplicationController resource, File outputDir) throws IOException {
+    private void generateBroker(IDeploymentConfig resource, File outputDir) throws IOException {
         String address = resource.getLabels().get(LabelKeys.ADDRESS);
         File brokerFile = new File(outputDir, String.format(BROKER_CLUSTER_PATTERN, address));
         writeBrokerConfig(resource, brokerFile);
     }
 
-    private void writeBrokerConfig(IReplicationController replicationController, File brokerFile) throws IOException {
+    private void writeBrokerConfig(IDeploymentConfig replicationController, File brokerFile) throws IOException {
         try (FileWriter writer = new FileWriter(brokerFile)) {
             writer.write(replicationController.toJson(false));
         }

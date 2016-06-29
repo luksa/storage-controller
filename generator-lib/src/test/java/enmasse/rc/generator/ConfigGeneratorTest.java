@@ -1,6 +1,6 @@
 package enmasse.rc.generator;
 
-import com.openshift.restclient.model.IReplicationController;
+import com.openshift.restclient.model.IDeploymentConfig;
 import com.openshift.restclient.model.IResource;
 import org.junit.Test;
 import enmasse.rc.model.BrokerProperties;
@@ -30,7 +30,7 @@ public class ConfigGeneratorTest {
         ConfigGenerator generator = new ConfigGenerator(null, properties);
         List<IResource> resources = generator.generate(new Config(Arrays.asList(new Destination("foo", true, false), new Destination("bar", false, false))));
         assertThat(resources.size(), is(1));
-        IReplicationController controller = (IReplicationController) resources.get(0);
+        IDeploymentConfig controller = (IDeploymentConfig) resources.get(0);
         assertThat(controller.getContainer("broker").getPorts().iterator().next().getContainerPort(), is(1234));
     }
 }

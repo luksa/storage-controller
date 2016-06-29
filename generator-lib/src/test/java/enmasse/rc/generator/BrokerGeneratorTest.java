@@ -1,7 +1,7 @@
 package enmasse.rc.generator;
 
 import com.openshift.restclient.model.IContainer;
-import com.openshift.restclient.model.IReplicationController;
+import com.openshift.restclient.model.IDeploymentConfig;
 import org.junit.Before;
 import org.junit.Test;
 import enmasse.rc.model.BrokerProperties;
@@ -31,27 +31,27 @@ public class BrokerGeneratorTest {
 
     @Test
     public void testGenerator() {
-        IReplicationController controller = generator.generate(new Destination("testaddr", true, false));
+        IDeploymentConfig deployment = generator.generate(new Destination("testaddr", true, false));
 
-        assertThat(controller.getName(), is("controller-testaddr"));
-        assertThat(controller.getLabels().get(LabelKeys.ROLE), is(Roles.BROKER));
-        assertThat(controller.getContainers().size(), is(2));
+        assertThat(deployment.getName(), is("deployment-testaddr"));
+        assertThat(deployment.getLabels().get(LabelKeys.ROLE), is(Roles.BROKER));
+        assertThat(deployment.getContainers().size(), is(2));
 
-        IContainer broker = controller.getContainer("broker");
+        IContainer broker = deployment.getContainer("broker");
         assertThat(broker.getPorts().size(), is(1));
         assertThat(broker.getPorts().iterator().next().getContainerPort(), is(1234));
         assertThat(broker.getEnvVars().get(EnvVars.QUEUE_NAME), is("testaddr"));
         assertThat(broker.getVolumeMounts().size(), is(1));
 
-        IContainer router = controller.getContainer("router");
+        IContainer router = deployment.getContainer("router");
         assertThat(router.getPorts().size(), is(1));
         assertThat(router.getPorts().iterator().next().getContainerPort(), is(5672));
     }
 
     @Test
     public void testGenerateTopic() {
-        IReplicationController controller = generator.generate(new Destination("testaddr", true, true));
-        IContainer broker = controller.getContainer("broker");
+        IDeploymentConfig deployment = generator.generate(new Destination("testaddr", true, true));
+        IContainer broker = deployment.getContainer("broker");
         assertThat(broker.getEnvVars().get(EnvVars.TOPIC_NAME), is("testaddr"));
     }
 }

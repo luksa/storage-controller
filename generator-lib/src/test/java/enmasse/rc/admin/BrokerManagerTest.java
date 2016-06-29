@@ -1,7 +1,7 @@
 package enmasse.rc.admin;
 
-import com.openshift.internal.restclient.model.ReplicationController;
-import com.openshift.restclient.model.IReplicationController;
+import com.openshift.internal.restclient.model.DeploymentConfig;
+import com.openshift.restclient.model.IDeploymentConfig;
 import enmasse.rc.generator.ConfigGenerator;
 import enmasse.rc.model.BrokerProperties;
 import enmasse.rc.model.Destination;
@@ -32,19 +32,19 @@ public class BrokerManagerTest {
 
     @Test
     public void testModifiedBrokerDoesNotResetReplicaCount() {
-        // Create simple queue and capture generated replication controller
-        ArgumentCaptor<IReplicationController> arg = ArgumentCaptor.forClass(IReplicationController.class);
+        // Create simple queue and capture generated deployment
+        ArgumentCaptor<IDeploymentConfig> arg = ArgumentCaptor.forClass(IDeploymentConfig.class);
 
         Destination queue = new Destination("myqueue", true, false);
         manager.destinationsUpdated(Collections.singletonList(queue));
         verify(mockClient).createBroker(arg.capture());
 
-        IReplicationController controller = arg.getValue();
-        when(mockClient.getBroker("controller-myqueue")).thenReturn(controller);
-        when(mockClient.listBrokers()).thenReturn(Collections.singletonList(controller));
+        IDeploymentConfig deployment = arg.getValue();
+        when(mockClient.getBroker("deployment-myqueue")).thenReturn(deployment);
+        when(mockClient.listBrokers()).thenReturn(Collections.singletonList(deployment));
 
-        // Modify replicas and update controller
-        controller.setReplicas(3);
+        // Modify replicas and update deployment
+        deployment.setReplicas(3);
         Destination modifiedQueue = new Destination("myqueue", true, true);
         manager.destinationsUpdated(Collections.singletonList(modifiedQueue));
 

@@ -1,7 +1,7 @@
 package enmasse.rc.generator;
 
 import com.openshift.restclient.IClient;
-import com.openshift.restclient.model.IReplicationController;
+import com.openshift.restclient.model.IDeploymentConfig;
 import com.openshift.restclient.model.IResource;
 import enmasse.rc.model.BrokerProperties;
 import enmasse.rc.model.Destination;
@@ -28,7 +28,7 @@ public class ConfigGenerator {
                 .collect(Collectors.toList());
     }
 
-    public IReplicationController generateBroker(Destination destination) {
+    public IDeploymentConfig generateBroker(Destination destination) {
         return brokerGenerator.generate(destination);
     }
 }

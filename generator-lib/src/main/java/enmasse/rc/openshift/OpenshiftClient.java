@@ -2,13 +2,12 @@ package enmasse.rc.openshift;
 
 import com.openshift.restclient.IClient;
 import com.openshift.restclient.ResourceKind;
-import com.openshift.restclient.model.IReplicationController;
+import com.openshift.restclient.model.IDeploymentConfig;
 import enmasse.rc.model.LabelKeys;
 import enmasse.rc.model.Roles;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,26 +24,26 @@ public class OpenshiftClient {
         this.namespace = namespace;
     }
 
-    public void createBroker(IReplicationController controller) {
+    public void createBroker(IDeploymentConfig controller) {
         log.log(Level.INFO, "Adding controller " + controller.getName());
         client.create(controller, namespace);
     }
 
-    public void deleteBroker(IReplicationController controller) {
+    public void deleteBroker(IDeploymentConfig controller) {
         log.log(Level.INFO, "Deleting controller " + controller.getName());
         client.delete(controller);
     }
 
-    public void updateBroker(IReplicationController controller) {
+    public void updateBroker(IDeploymentConfig controller) {
         log.log(Level.INFO, "Updating controller " + controller.getName());
         client.update(controller);
     }
 
-    public List<IReplicationController> listBrokers() {
-        return client.list(ResourceKind.REPLICATION_CONTROLLER, namespace, Collections.singletonMap(LabelKeys.ROLE, Roles.BROKER));
+    public List<IDeploymentConfig> listBrokers() {
+        return client.list(ResourceKind.DEPLOYMENT_CONFIG, namespace, Collections.singletonMap(LabelKeys.ROLE, Roles.BROKER));
     }
 
-    public IReplicationController getBroker(String name) {
-        return client.get(ResourceKind.REPLICATION_CONTROLLER, name, namespace);
+    public IDeploymentConfig getBroker(String name) {
+        return client.get(ResourceKind.DEPLOYMENT_CONFIG, name, namespace);
     }
 }

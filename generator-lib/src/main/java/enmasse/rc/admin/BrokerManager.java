@@ -2,7 +2,7 @@ package enmasse.rc.admin;
 
 import com.openshift.restclient.model.IContainer;
 import com.openshift.restclient.model.IPort;
-import com.openshift.restclient.model.IReplicationController;
+import com.openshift.restclient.model.IDeploymentConfig;
 import enmasse.rc.generator.ConfigGenerator;
 import enmasse.rc.model.Destination;
 import enmasse.rc.model.LabelKeys;
@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * The {@link BrokerManager} maintains the number of broker replication controllers to be consistent with the number of destinations in config that require store_and_forward.
+ * The {@link BrokerManager} maintains the number of broker replication deployments to be consistent with the number of destinations in config that require store_and_forward.
  *
  * @author lulf
  */
@@ -34,56 +34,56 @@ public class BrokerManager {
     }
 
     public void destinationsUpdated(Collection<Destination> newDestinations) {
-        List<IReplicationController> currentBrokers = openshiftClient.listBrokers();
+        List<IDeploymentConfig> currentBrokers = openshiftClient.listBrokers();
         Collection<Destination> destinations = newDestinations.stream()
                 .filter(Destination::storeAndForward)
                 .collect(Collectors.toList());
-        log.log(Level.INFO, "Brokers got updated to " + destinations.size() + " destinations, we have " + currentBrokers.size() + " destinations: " + currentBrokers.stream().map(IReplicationController::getName).toString());
+        log.log(Level.INFO, "Brokers got updated to " + destinations.size() + " destinations, we have " + currentBrokers.size() + " destinations: " + currentBrokers.stream().map(IDeploymentConfig::getName).toString());
         createBrokers(currentBrokers, destinations);
         deleteBrokers(currentBrokers, destinations);
         updateBrokers(currentBrokers, destinations);
     }
 
-    private void createBrokers(Collection<IReplicationController> currentBrokers, Collection<Destination> newDestinations) {
+    private void createBrokers(Collection<IDeploymentConfig> currentBrokers, Collection<Destination> newDestinations) {
         newDestinations.stream()
-                .filter(broker -> !currentBrokers.stream().filter(controller -> broker.address().equals(controller.getLabels().get(LabelKeys.ADDRESS))).findAny().isPresent())
+                .filter(broker -> !currentBrokers.stream().filter(deployment -> broker.address().equals(deployment.getLabels().get(LabelKeys.ADDRESS))).findAny().isPresent())
                 .map(generator::generateBroker)
                 .forEach(openshiftClient::createBroker);
     }
 
-    private void deleteBrokers(Collection<IReplicationController> currentBrokers, Collection<Destination> newDestinations) {
+    private void deleteBrokers(Collection<IDeploymentConfig> currentBrokers, Collection<Destination> newDestinations) {
         currentBrokers.stream()
-                .filter(controller -> !newDestinations.stream().filter(broker -> broker.address().equals(controller.getLabels().get(LabelKeys.ADDRESS))).findAny().isPresent())
-                .map(controller -> {
-                    controller.setReplicas(0);
-                    openshiftClient.updateBroker(controller);
-                    return controller;
+                .filter(deployment -> !newDestinations.stream().filter(broker -> broker.address().equals(deployment.getLabels().get(LabelKeys.ADDRESS))).findAny().isPresent())
+                .map(deployment -> {
+                    deployment.setReplicas(0);
+                    openshiftClient.updateBroker(deployment);
+                    return deployment;
                 })
                 .forEach(openshiftClient::deleteBroker);
     }
 
-    private void updateBrokers(Collection<IReplicationController> currentBrokers, Collection<Destination> newDestinations) {
+    private void updateBrokers(Collection<IDeploymentConfig> currentBrokers, Collection<Destination> newDestinations) {
         newDestinations.stream()
-                .filter(broker -> currentBrokers.stream().filter(controller -> broker.address().equals(controller.getLabels().get(LabelKeys.ADDRESS))).findAny().isPresent())
+                .filter(broker -> currentBrokers.stream().filter(deployment -> broker.address().equals(deployment.getLabels().get(LabelKeys.ADDRESS))).findAny().isPresent())
                 .map(generator::generateBroker)
                 .forEach(this::brokerModified);
     }
 
-    private void brokerModified(IReplicationController controller) {
-        IReplicationController oldController = openshiftClient.getBroker(controller.getName());
-        if (!equivalent(controller, oldController)) {
-            log.log(Level.INFO, "Modifying replication controller " + controller.getName());
-            oldController.setContainers(controller.getContainers());
-            oldController.setReplicaSelector(controller.getReplicaSelector());
+    private void brokerModified(IDeploymentConfig deployment) {
+        IDeploymentConfig oldDeployment = openshiftClient.getBroker(deployment.getName());
+        if (!equivalent(deployment, oldDeployment)) {
+            log.log(Level.INFO, "Modifying replication deployment " + deployment.getName());
+            oldDeployment.setContainers(deployment.getContainers());
+            oldDeployment.setReplicaSelector(deployment.getReplicaSelector());
 
-            for (Map.Entry<String, String> label : controller.getLabels().entrySet()) {
-                oldController.addLabel(label.getKey(), label.getValue());
+            for (Map.Entry<String, String> label : deployment.getLabels().entrySet()) {
+                oldDeployment.addLabel(label.getKey(), label.getValue());
             }
-            openshiftClient.updateBroker(oldController);
+            openshiftClient.updateBroker(oldDeployment);
         }
     }
 
-    private static boolean equivalent(IReplicationController a, IReplicationController b) {
+    private static boolean equivalent(IDeploymentConfig a, IDeploymentConfig b) {
         return equivalent(a.getContainers(), b.getContainers())
             && a.getLabels().equals(b.getLabels())
             && a.getReplicaSelector().equals(b.getReplicaSelector());
